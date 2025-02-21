@@ -25,7 +25,7 @@ const App = () => {
     const [selectedOptions, setSelectedOptions] = useState<OptionType[]>([]);
     const [rollNumber, setRollNumber] = useState<string>('22bcs16300');
 
-    const backendEndpoint = import.meta.env.VITE_BACKEND_URL || 'https://bfhlcode.vercel.app/bfhl';
+    const backendEndpoint =  'https://bfhlcode.vercel.app/bfhl';
 
     useEffect(() => {
         document.title = rollNumber;
