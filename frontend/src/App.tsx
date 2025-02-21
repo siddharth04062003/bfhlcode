@@ -1,43 +1,60 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Select from "react-select";
+import Select, { MultiValue } from "react-select";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const App = () => {
-    const [jsonData, setJsonData] = useState("");
-    const [response, setResponse] = useState(null);
-    const [error, setError] = useState("");
-    const [selectedOptions, setSelectedOptions] = useState([]);
-    const [rollNumber] = useState("22bcs16300");
+interface ResponseData {
+    is_success: boolean;
+    user_id: string;
+    email: string;
+    roll_number: string;
+    numbers?: string[];
+    alphabets?: string[];
+    highest_alphabet?: string[];
+}
 
-    const backendEndpoint = import.meta.env.VITE_BACKEND_URL || "https://bfhlcode.vercel.app/bfhl";
+interface SelectOption {
+    value: string;
+    label: string;
+}
+
+const App: React.FC = () => {
+    const [jsonData, setJsonData] = useState<string>("");
+    const [response, setResponse] = useState<ResponseData | null>(null);
+    const [error, setError] = useState<string>("");
+    const [selectedOptions, setSelectedOptions] = useState<SelectOption[]>([]);
+    const [rollNumber] = useState<string>("22bcs16300");
+
+    const backendEndpoint: string = import.meta.env.VITE_BACKEND_URL || "https://bfhlcode.vercel.app/bfhl";
 
     useEffect(() => {
         document.title = rollNumber;
     }, [rollNumber]);
 
-    const options = [
+    const options: SelectOption[] = [
         { value: "alphabets", label: "Alphabets" },
         { value: "numbers", label: "Numbers" },
         { value: "highest_alphabet", label: "Highest Alphabet" },
     ];
 
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setJsonData(e.target.value);
     };
 
-    const handleSelectChange = (newValue) => {
-        setSelectedOptions(newValue);
+    const handleSelectChange = (newValue: MultiValue<SelectOption>) => {
+        setSelectedOptions(newValue as SelectOption[]);
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
-            JSON.parse(jsonData);
             const parsedJson = JSON.parse(jsonData);
-            const res = await axios.post(backendEndpoint, { data: parsedJson.data });
+            if (!parsedJson.data || !Array.isArray(parsedJson.data)) {
+                throw new Error("Invalid JSON format. Expected { data: [...] }");
+            }
 
-            // Ensure required fields are always included
+            const res = await axios.post<ResponseData>(backendEndpoint, { data: parsedJson.data });
+
             setResponse({
                 is_success: true,
                 user_id: "Siddharth Gautam",
@@ -47,16 +64,21 @@ const App = () => {
             });
 
             setError("");
-        } catch (err) {
-            setError("Invalid JSON: " + err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError("Invalid JSON: " + err.message);
+            } else {
+                setError("An unknown error occurred.");
+            }
             setResponse(null);
         }
     };
 
-    const filteredResponse = () => {
+    const filteredResponse = (): Partial<ResponseData> | null => {
         if (!response) return null;
+
         const selectedValues = selectedOptions.map((option) => option.value);
-        const filteredData = {
+        const filteredData: Partial<ResponseData> = {
             is_success: true,
             user_id: "Siddharth Gautam",
             email: "22bcs16300@cuchd.in",
@@ -64,8 +86,8 @@ const App = () => {
         };
 
         selectedValues.forEach((key) => {
-            if (response.hasOwnProperty(key)) {
-                filteredData[key] = response[key];
+            if (response && key in response) {
+                filteredData[key as keyof ResponseData] = response[key as keyof ResponseData];
             }
         });
 
@@ -96,7 +118,12 @@ const App = () => {
                 {error && <div className="alert alert-danger mt-3">{error}</div>}
                 {response && (
                     <div className="mt-3">
-                        <Select isMulti options={options} onChange={handleSelectChange} className="mb-3" />
+                        <Select
+                            isMulti
+                            options={options}
+                            onChange={handleSelectChange}
+                            className="mb-3"
+                        />
                         <h4 className="text-dark">Filtered Response:</h4>
                         <pre className="bg-dark text-white p-3 rounded">{JSON.stringify(filteredResponse(), null, 2)}</pre>
                     </div>
