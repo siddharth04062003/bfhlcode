@@ -56,11 +56,10 @@ const App: React.FC = () => {
             const res = await axios.post<ResponseData>(backendEndpoint, { data: parsedJson.data });
 
             setResponse({
-                is_success: true,
+                ...res.data,
                 user_id: "Siddharth Gautam",
                 email: "22bcs16300@cuchd.in",
-                roll_number: "22bcs16300",
-                ...res.data
+                roll_number: "22bcs16300"
             });
 
             setError("");
@@ -79,7 +78,6 @@ const App: React.FC = () => {
 
         const selectedValues = selectedOptions.map((option) => option.value);
         const filteredData: Partial<ResponseData> = {
-            is_success: true,
             user_id: "Siddharth Gautam",
             email: "22bcs16300@cuchd.in",
             roll_number: "22bcs16300",
